@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import javafx.scene.shape.Box?>
+<AnchorPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="Game.GameController"
+            fx:id="panel"
+            prefHeight="400.0" prefWidth="600.0">
+<GridPane fx:id="Field" hgap="9" vgap="9" minWidth="160" minHeight="160"/>
+</AnchorPane>

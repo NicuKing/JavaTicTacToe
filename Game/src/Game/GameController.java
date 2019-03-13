@@ -1,52 +1,67 @@
-package sample;
+package Game;
 
 import javafx.application.Application;
 import javafx.event.EventHandler;
+import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Group;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
+import javafx.scene.shape.Box;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-import java.sql.DriverManager;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 
-public class Main extends Application {
+public class GameController {
 
-    ArrayList<Button> buttons = new ArrayList<Button>();
-    Label alert = new Label();
-    Label score = new Label();
-    int countscore = 0;
+    @FXML
+    private GridPane Field;
+
+    @FXML
+    private AnchorPane panel;
+
+    @FXML
+    private Button reset = new Button();
+
+    @FXML
+    private Label alert = new Label();
+
+    @FXML
+    private Label scorecount = new Label();
+
+    int score;
     boolean turn = true;
     boolean streakX = false;
     boolean streakO = false;
     boolean streak = true;
+    ArrayList<Button> Tiles = new ArrayList<>();
+    HighscoreController hc;
 
-    @Override
-    public void start(Stage primaryStage) throws Exception{
-        Group game = new Group();
-        primaryStage.setTitle("Tic Tac Toe");
-        primaryStage.setScene(new Scene(game, 300, 275));
+    public void initialize(){
+
+        //Das Spielfeld in die Mitte verscheiben
+        Field.setTranslateX(52);
+        Field.setTranslateY(55);
+
         //Label um alerts zu zeigen
         alert.setTranslateX(105);
-        alert.setTranslateY(220);
-        game.getChildren().add(alert);
+        alert.setTranslateY(240);
+        panel.getChildren().add(alert);
 
         //Button um spiel zu reseten
-        Button reset = new Button("reset");
+        reset.setText("Reset Game");
         reset.setTranslateX(105);
         reset.setTranslateY(20);
-        //Reset das Spiel Event
         reset.setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent event) {
                 alert.setText("");
-                for(Button b : buttons){
+                for(Button b : Tiles){
                     b.setText("");
                     b.setDisable(false);
                     b.setMouseTransparent(false);
@@ -54,20 +69,18 @@ public class Main extends Application {
                 }
             }
         });
-        game.getChildren().add(reset);
+        panel.getChildren().add(reset);
 
         //highscore anzeige
-        score.setTranslateX(145);
-        score.setTranslateY(220);
-        score.setText(String.valueOf(countscore));
-        game.getChildren().add(score);
+        scorecount.setTranslateX(200);
+        scorecount.setTranslateY(240);
+        scorecount.setText(String.valueOf(score));
+        panel.getChildren().add(scorecount);
 
         //Einfügen von Buttons für Spielfeld
         for(int i=1; i<=3;i++){
             for(int j=1;j<=3;j++){
                 Button b = new Button();
-                b.setTranslateX(50*j);
-                b.setTranslateY(50*i);
                 b.setMinHeight(50);
                 b.setMinWidth(50);
                 b.setOnMouseClicked(new EventHandler<MouseEvent>() {
@@ -82,23 +95,49 @@ public class Main extends Application {
                         }
                         b.setMouseTransparent(true);
                         b.setFocusTraversable(false);
-                        checkGameOver();
+                        //Check if game is over
+                        if(checkGameOver()){
+                            for(Button b : Tiles){
+                                b.setDisable(true);
+                            }
+                            //check if streak still going
+                            if(streak) {
+                                scorecount.setText(String.valueOf(score));
+                            }
+                            if(!streak){
+                                FXMLLoader loader = new FXMLLoader(getClass().getResource("HighscoreWindow.fxml"));
+                                HighscoreController highscore = new HighscoreController(score);
+                                loader.setController(highscore);
+                                Stage stage = new Stage();
+                                stage.setTitle("Highscore");
+                                try {
+                                    AnchorPane anchor = loader.load();
+                                    stage.setScene(new Scene(anchor, 250, 350));
+                                    stage.show();
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                                streak = true;
+                                score = 1;
+                                scorecount.setText(String.valueOf(score));
+                            }
+                        }
                     }
                 });
-                game.getChildren().add(b);
-                buttons.add(b);
+                //Buttons dem feld hinzufügen
+                Field.add(b, j ,i );
+                Tiles.add(b);
             }
         }
-        primaryStage.show();
     }
 
     //Schaut ob die Runde zu Ende ist, und wie der WinStreak eines Spieler aussieht
-    public void checkGameOver(){
+    public boolean checkGameOver(){
         boolean gameover = false;
 
         //Check if X wins
         for(int i=0; i<=2;i++){
-            if(buttons.get(i).getText() == "X" && buttons.get(i+3).getText() == "X" && buttons.get(i+6).getText() == "X") {
+            if(Tiles.get(i).getText() == "X" && Tiles.get(i+3).getText() == "X" && Tiles.get(i+6).getText() == "X") {
                 alert.setText("X wins");
                 gameover = true;
                 if(streakO == true){
@@ -106,11 +145,11 @@ public class Main extends Application {
                     streakO = false;
                 }
                 streakX = true;
-                countscore++;
+                score++;
             }
         }
         for(int i=0;i<=6;i+=3){
-            if(buttons.get(i).getText() == "X" && buttons.get(i+1).getText() == "X" && buttons.get(i+2).getText() == "X"){
+            if(Tiles.get(i).getText() == "X" && Tiles.get(i+1).getText() == "X" && Tiles.get(i+2).getText() == "X"){
                 alert.setText("X wins");
                 gameover = true;
                 if(streakO == true){
@@ -118,10 +157,10 @@ public class Main extends Application {
                     streakO = false;
                 }
                 streakX = true;
-                countscore++;
+                score++;
             }
         }
-        if(buttons.get(0).getText() == "X" && buttons.get(4).getText() == "X" && buttons.get(8).getText() == "X") {
+        if(Tiles.get(0).getText() == "X" && Tiles.get(4).getText() == "X" && Tiles.get(8).getText() == "X") {
             alert.setText("X wins");
             gameover = true;
             if(streakO == true){
@@ -129,9 +168,9 @@ public class Main extends Application {
                 streakO = false;
             }
             streakX = true;
-            countscore++;
+            score++;
         }
-        else if(buttons.get(2).getText() == "X" && buttons.get(4).getText() == "X" && buttons.get(6).getText() == "X"){
+        else if(Tiles.get(2).getText() == "X" && Tiles.get(4).getText() == "X" && Tiles.get(6).getText() == "X"){
             alert.setText("X wins");
             gameover = true;
             if(streakO == true){
@@ -139,12 +178,12 @@ public class Main extends Application {
                 streakO = false;
             }
             streakX = true;
-            countscore++;
+            score++;
         }
 
         //Check if O wins
         for(int i=0; i<=2;i++){
-            if(buttons.get(i).getText() == "O" && buttons.get(i+3).getText() == "O" && buttons.get(i+6).getText() == "O") {
+            if(Tiles.get(i).getText() == "O" && Tiles.get(i+3).getText() == "O" && Tiles.get(i+6).getText() == "O") {
                 alert.setText("O wins");
                 gameover = true;
                 if(streakX == true){
@@ -152,11 +191,11 @@ public class Main extends Application {
                     streakX = false;
                 }
                 streakO = true;
-                countscore++;
+                score++;
             }
         }
         for(int i=0;i<=6;i+=3){
-            if(buttons.get(i).getText() == "O" && buttons.get(i+1).getText() == "O" && buttons.get(i+2).getText() == "O"){
+            if(Tiles.get(i).getText() == "O" && Tiles.get(i+1).getText() == "O" && Tiles.get(i+2).getText() == "O"){
                 alert.setText("O wins");
                 gameover = true;
                 if(streakX == true){
@@ -164,10 +203,10 @@ public class Main extends Application {
                     streakX = false;
                 }
                 streakO = true;
-                countscore++;
+                score++;
             }
         }
-        if(buttons.get(0).getText() == "O" && buttons.get(4).getText() == "O" && buttons.get(8).getText() == "O") {
+        if(Tiles.get(0).getText() == "O" && Tiles.get(4).getText() == "O" && Tiles.get(8).getText() == "O") {
             alert.setText("O wins");
             gameover = true;
             if(streakX == true){
@@ -175,9 +214,9 @@ public class Main extends Application {
                 streakX = false;
             }
             streakO = true;
-            countscore++;
+            score++;
         }
-        else if(buttons.get(2).getText() == "O" && buttons.get(4).getText() == "O" && buttons.get(6).getText() == "O"){
+        else if(Tiles.get(2).getText() == "O" && Tiles.get(4).getText() == "O" && Tiles.get(6).getText() == "O"){
             alert.setText("O wins");
             gameover = true;
             if(streakX == true){
@@ -185,12 +224,12 @@ public class Main extends Application {
                 streakX = false;
             }
             streakO = true;
-            countscore++;
+            score++;
         }
 
         //Check if tie
         int counter = 0;
-        for(Button b : buttons){
+        for(Button b : Tiles){
             if(b.getText() != "") counter++;
             if(counter == 9) gameover = true;
         }
@@ -201,40 +240,7 @@ public class Main extends Application {
         System.out.println("streakO: "+String.valueOf(streakO));
         System.out.println();
         */
-        //check if streak still going
-        if(streak) {
-            score.setText(String.valueOf(countscore));
-        }
-        if(!streak){
-            Highscore();
-            streak = true;
-            countscore = 1;
-        }
 
-        //Check if game is over
-        if(gameover){
-            for(Button b : buttons){
-                b.setDisable(true);
-            }
-        }
-    }
-
-    //Um das Fenster mit Highscore zu öffnen und den Highscore eintragen
-    public void Highscore() {
-        Parent root;
-        try {
-            root = FXMLLoader.load(getClass().getResource("sample.fxml"));
-            Stage stage = new Stage();
-            stage.setTitle("Highscore");
-            stage.setScene(new Scene(root, 300, 400));
-            stage.show();
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void main(String[] args) {
-        launch(args);
+        return gameover;
     }
 }
